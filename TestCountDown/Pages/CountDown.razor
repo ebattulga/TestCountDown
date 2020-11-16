@@ -1,0 +1,121 @@
+﻿@page "/CountDown"
+@inject IJSRuntime js
+
+<style>
+    .spin-container { text-align: center; width: 80px; margin-right: 20px; }
+    .spin-border { border-radius: 10px; border: 1px dashed gray; padding: 10px; }
+    .spin { font-size: 48px; }
+    .spin-container button { border: none; background: none; }
+</style>
+<h1>Count down timer</h1>
+
+<table>
+    <tr>
+        <td>
+            <MySpin @ref="spinHour" Title="Цаг" isHour="true"></MySpin>
+        </td>
+        <td>
+            <MySpin @ref="spinMinute" Title="Минут"></MySpin>
+        </td>
+        <td>
+            <MySpin @ref="spinSecond" Title="Секунд"></MySpin>
+        </td>
+
+    </tr>
+</table>
+
+<div>
+    <button class="btn btn-primary" @onclick="Start">Start</button>
+    <button class="btn btn-primary" @onclick="Pause">@PauseTitle</button>
+    <button class="btn btn-primary" @onclick="Stop">Stop</button>
+</div>
+
+<div>@message</div>
+
+@code {
+    public MySpin spinHour { get; set; }
+    public MySpin spinMinute { get; set; }
+    public MySpin spinSecond { get; set; }
+
+    string PauseTitle;
+
+    DateTime endDate { get; set; }
+
+    Boolean isRunning;
+    string message;
+
+    protected override void OnInitialized()
+    {
+        PauseTitle="Pause";
+    }
+
+    async Task Start()
+    {
+        endDate=new DateTime(DateTime.Now.Year,DateTime.Now.Month, DateTime.Now.Day,DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second);
+        endDate = endDate.AddHours(spinHour.Number).AddMinutes(spinMinute.Number).AddSeconds(spinSecond.Number);
+        spinHour.isButtonInActive = true;
+        spinMinute.isButtonInActive = true;
+        spinSecond.isButtonInActive = true;
+        isRunning=true;
+        Run();
+    }
+
+    async Task Run()
+    {
+        while (isRunning)
+        {
+
+
+            var diff = endDate - DateTime.Now;
+
+            spinHour.SetNumber(diff.Hours);
+            spinMinute.SetNumber(diff.Minutes);
+            spinSecond.SetNumber(diff.Seconds);
+
+            message = DateTime.Now.ToShortTimeString();
+
+            if (diff.TotalSeconds <= 0)
+            {
+
+
+
+                Stop();
+                StateHasChanged();
+                //await js.InvokeVoidAsync("alert", "Finished");
+                await js.InvokeVoidAsync("notifyMe");
+                break;
+            }
+
+            await Task.Delay(1000);
+        }
+    }
+
+
+    void Pause()
+    {
+        if (isRunning) {
+            isRunning=false;
+            PauseTitle="Resume";
+        }
+        else
+        {
+            endDate = DateTime.Now.AddHours(spinHour.Number).AddMinutes(spinMinute.Number).AddSeconds(spinSecond.Number);
+            isRunning = true;
+            PauseTitle = "Pause";
+            Run();
+
+        }
+    }
+
+    void Stop()
+    {
+        isRunning=false;
+        spinHour.SetNumber(0);
+        spinMinute.SetNumber(0);
+        spinSecond.SetNumber(0);
+
+        spinHour.isButtonInActive = false;
+        spinMinute.isButtonInActive = false;
+        spinSecond.isButtonInActive = false;
+    }
+}
