@@ -1,63 +1,164 @@
-﻿@page "/CountDown"
+﻿@page "/"
 @inject IJSRuntime js
+<div style="position:relative;height:100vh;">
+    <canvas id="c" style="position:absolute;">
+    </canvas>
 
-<style>
-    .spin-container { text-align: center; width: 80px; margin-right: 20px; }
-    .spin-border { border-radius: 10px; border: 1px dashed gray; padding: 10px; }
-    .spin { font-size: 48px; }
-    .spin-container button { border: none; background: none; }
-</style>
-<h1>Count down timer</h1>
+    <style>
+        canvas { display: block; width: 100vw; height: 100vh; }
+        .spin-container { text-align: center; width: 80px; margin-right: 20px; }
+        .spin-container:last-child{margin-right:0px;}
+        .spin-container button:disabled { opacity: 0; }
+        .spin-border { border-radius: 10px; padding: 10px; }
+        .spin { font-size: 56px; color:white; }
+        .spin-container button { border: none; background: none; }
+        .spin-container .title{color:rgba(255,255,255,.3);display:block;margin-top:-20px;}
+        .button-area { position:absolute;height:440px;width:440px;}
+        .button-area .circleButton { border-radius: 50%; width: 80px; height: 80px; border: 1px solid white; position: absolute; border: none; background: rgba(256,256,256,0.4); }
+        .button-area .circleButton:hover{background:rgba(256,256,256,0.2);}
+        .button-area .circleButton:focus { outline: 0; }
+        .button-area .btn1{left:10px;top:90%;}
+        .button-area .btn2 { left: 50%; top: 100%; margin-left:-40px;}
+        .button-area .btn3 { right: 10px; top: 90%; }
+        
 
-<table>
-    <tr>
-        <td>
-            <MySpin @ref="spinHour" Title="Цаг" isHour="true"></MySpin>
-        </td>
-        <td>
-            <MySpin @ref="spinMinute" Title="Минут"></MySpin>
-        </td>
-        <td>
-            <MySpin @ref="spinSecond" Title="Секунд"></MySpin>
-        </td>
+        .progress-ring { position: absolute; width: 440px; height: 440px; }
+        .progress-ring__circle { transition: 0.35s stroke-dashoffset; transform-origin: 50% 50%;transform:rotate(-90deg); }
+    </style>
+    <div style="position:absolute;width:440px;height:440px;left:50%;top:50%;margin-left:-220px;margin-top:-220px;">
+        @*<h1>Count down timer</h1>*@
+        <div style="position:relative;height:440px;">
+            <svg class="progress-ring">
+                <circle class="progress-ring__circle"
+                        stroke="#fffffff0"
+                        stroke-width="2" style="stroke-dashoffset:0"
+                        fill="transparent"
+                        r="@(radius+10)"
+                        cx="220"
+                        cy="220" />
+                <circle class="progress-ring__circle"
+                        stroke="#ffffff50"
+                        stroke-width="@(circleBorderWidth)" style="stroke-dasharray:@(circumRef),@(circumRef);stroke-dashoffset:@(strokeOffset)"
+                        fill="transparent"
+                        r="@(radius)"
+                        cx="220"
+                        cy="220" />
+            </svg>
 
-    </tr>
-</table>
+            <div class="button-area">
+                
+                <button class="circleButton btn1" @onclick="Start">
+                    @if (!isRunning)
+                    {
+                        <svg width="3em" height="3em" viewBox="0 0 16 16" class="bi bi-play-fill" fill="white" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z" />
+                        </svg>
+                    }
+                    else
+                    {
+                        <svg width="3em" height="3em" viewBox="0 0 16 16" class="bi bi-pause-fill" fill="white" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5zm5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5z" />
+                        </svg>
+                    }
+                </button>
+                                
+                <button class="circleButton btn3" @onclick="Stop">
+                    <svg width="3em" height="3em" viewBox="0 0 16 16" class="bi bi-stop-fill" fill="white" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 3.5h6A1.5 1.5 0 0 1 12.5 5v6a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 11V5A1.5 1.5 0 0 1 5 3.5z" />
+                    </svg>
+                </button>
+            </div>
 
-<div>
-    <button class="btn btn-primary" @onclick="Start">Start</button>
-    <button class="btn btn-primary" @onclick="Pause">@PauseTitle</button>
-    <button class="btn btn-primary" @onclick="Stop">Stop</button>
+            <table style="position: absolute; left: 50%; top: 50%; transform: translateX(-50%) translateY(-50%);">
+                <tr>
+                    <td>
+                        <MySpin @ref="spinHour" Title="Цаг" isHour="true"></MySpin>
+                    </td>
+                    <td>
+                        <MySpin @ref="spinMinute" Title="Минут"></MySpin>
+                    </td>
+                    <td>
+                        <MySpin @ref="spinSecond" Title="Секунд"></MySpin>
+                    </td>
+
+                </tr>
+            </table>
+        </div>
+        
+    </div>
 </div>
-
-<div>@message</div>
-
 @code {
     public MySpin spinHour { get; set; }
     public MySpin spinMinute { get; set; }
     public MySpin spinSecond { get; set; }
+
+    public double strokeOffset { get; set; }
+    public double circumRef { get;set;}
+    int circleBorderWidth=16;
 
     string PauseTitle;
 
     DateTime endDate { get; set; }
 
     Boolean isRunning;
+    Boolean isStarted { get;set;}
     string message;
+    public int radius=192;
 
     protected override void OnInitialized()
     {
-        PauseTitle="Pause";
+        PauseTitle = "Pause";
+        SetPercent(100);
     }
 
-    async Task Start()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        endDate=new DateTime(DateTime.Now.Year,DateTime.Now.Month, DateTime.Now.Day,DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second);
-        endDate = endDate.AddHours(spinHour.Number).AddMinutes(spinMinute.Number).AddSeconds(spinSecond.Number);
-        spinHour.isButtonInActive = true;
-        spinMinute.isButtonInActive = true;
-        spinSecond.isButtonInActive = true;
-        isRunning=true;
-        Run();
+        if (firstRender)
+        {
+            await js.InvokeVoidAsync("ApplyBackgroundAnim");
+        }
+    }
+
+    public double totalseconds;
+
+    async Task Start(MouseEventArgs args)
+    {
+        if (!isStarted) {
+            isStarted=true;
+            endDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second);
+            endDate = endDate.AddHours(spinHour.Number).AddMinutes(spinMinute.Number).AddSeconds(spinSecond.Number);
+            totalseconds=( endDate -DateTime.Now).TotalSeconds;
+            spinHour.isButtonInActive = true;
+            spinMinute.isButtonInActive = true;
+            spinSecond.isButtonInActive = true;
+            isRunning = true;
+            Run();
+        }
+        else
+        {
+            if (isRunning)
+            {
+                isRunning = false;
+                PauseTitle = "Resume";
+            }
+            else
+            {
+                endDate = DateTime.Now.AddHours(spinHour.Number).AddMinutes(spinMinute.Number).AddSeconds(spinSecond.Number);
+                isRunning = true;
+                PauseTitle = "Pause";
+                Run();
+
+            }
+        }
+        //await js.InvokeVoidAsync("handleEvent",args);
+    }
+
+    void SetPercent(int percent)
+    {
+        radius = (440 - circleBorderWidth * 2) / 2;
+        circumRef = radius * 2 * Math.PI;
+        strokeOffset = circumRef - (percent / 100d * circumRef);
+        StateHasChanged();
     }
 
     async Task Run()
@@ -74,12 +175,17 @@
 
             message = DateTime.Now.ToShortTimeString();
 
+
+            var percent =(int)(diff.TotalSeconds /totalseconds *100);
+
+            SetPercent(percent);
             if (diff.TotalSeconds <= 0)
             {
 
 
 
                 Stop();
+                SetPercent(0);
                 StateHasChanged();
                 //await js.InvokeVoidAsync("alert", "Finished");
                 await js.InvokeVoidAsync("notifyMe");
@@ -91,25 +197,11 @@
     }
 
 
-    void Pause()
-    {
-        if (isRunning) {
-            isRunning=false;
-            PauseTitle="Resume";
-        }
-        else
-        {
-            endDate = DateTime.Now.AddHours(spinHour.Number).AddMinutes(spinMinute.Number).AddSeconds(spinSecond.Number);
-            isRunning = true;
-            PauseTitle = "Pause";
-            Run();
-
-        }
-    }
 
     void Stop()
     {
-        isRunning=false;
+        isRunning = false;
+        isStarted=false;
         spinHour.SetNumber(0);
         spinMinute.SetNumber(0);
         spinSecond.SetNumber(0);
@@ -117,5 +209,9 @@
         spinHour.isButtonInActive = false;
         spinMinute.isButtonInActive = false;
         spinSecond.isButtonInActive = false;
+    }
+    void StartEx(MouseEventArgs args)
+    {
+
     }
 }
