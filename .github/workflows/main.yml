@@ -7,6 +7,8 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [ master ]
+    paths-ignore:
+      - '**/README.md'
   pull_request:
     branches: [ master ]
 
@@ -42,7 +44,7 @@ jobs:
       run: touch release/wwwroot/.nojekyll
       
     - name: Commit wwwroot to GitHub Pages
-      uses: JamesIves/github-pages-deploy-action@3.5.9
+      uses: JamesIves/github-pages-deploy-action@3.7.1
       with:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         BRANCH: gh-pages
