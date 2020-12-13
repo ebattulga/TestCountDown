@@ -3,14 +3,14 @@
 <div style="position:relative;height:100vh;">
     <canvas id="c" style="position:absolute;">
     </canvas>
-
+    
     <style>
         canvas { display: block; width: 100vw; height: 100vh; }
-        .spin-container { text-align: center; width: 80px; margin-right: 20px; }
+        .spin-container { text-align: center; width: 90px; margin-right: 20px; }
         .spin-container:last-child{margin-right:0px;}
         .spin-container button:disabled { opacity: 0; }
         .spin-border { border-radius: 10px; padding: 10px; }
-        .spin { font-size: 56px; color:white; }
+        .spin { font-size: 70px; color:white; }
         .spin-container button { border: none; background: none; }
         .spin-container .title{color:rgba(255,255,255,.3);display:block;margin-top:-20px;}
         .button-area { position:absolute;height:440px;width:440px;}
@@ -24,8 +24,13 @@
 
         .progress-ring { position: absolute; width: 440px; height: 440px; }
         .progress-ring__circle { transition: 0.35s stroke-dashoffset; transform-origin: 50% 50%;transform:rotate(-90deg); }
+        .timer { position: absolute; width: 440px; height: 440px; left: 50%; top: 50%; margin-left: -220px; margin-top: -220px; }
+
+        @@media only screen and (max-width:500px) {
+            .timer{transform:scale(0.7)}
+        }
     </style>
-    <div style="position:absolute;width:440px;height:440px;left:50%;top:50%;margin-left:-220px;margin-top:-220px;">
+    <div class="timer">
         @*<h1>Count down timer</h1>*@
         <div style="position:relative;height:440px;">
             <svg class="progress-ring">
